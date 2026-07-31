@@ -1,0 +1,39 @@
+{
+  "name": "ai-pet-admin",
+  "version": "1.0.0",
+  "description": "> 职责：登录、设备、人设设置、历史/记忆管理、外设状态、知识库运营（管理员）、对接小智智控台入口。   > 首版定位：**调试/资产向管理台**，不是消费级潮玩 App。   > 终端用户手机/桌面客户端 → 见 [`../ai-pet-app`](../ai-pet-app/README.md)。",
+  "private": true,
+  "type": "commonjs",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build && node scripts/create-worker.mjs",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckmx-zkp/ai-pet-admin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ckmx-zkp/ai-pet-admin/issues"
+  },
+  "homepage": "https://github.com/ckmx-zkp/ai-pet-admin#readme",
+  "dependencies": {
+    "axios": "^1.19.0",
+    "element-plus": "^2.14.3",
+    "pinia": "^4.0.2",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.0",
+    "vue-tsc": "^3.3.9"
+  }
+}
