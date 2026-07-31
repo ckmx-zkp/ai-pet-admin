@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 
-const worker = `export default {
+const worker = `// Static SPA entry point for AI Pet Admin.
+export default {
   async fetch(request, env) {
     const response = await env.ASSETS.fetch(request)
     if (response.status !== 404 || !request.headers.get('accept')?.includes('text/html')) {
