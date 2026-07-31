@@ -19,9 +19,13 @@
 | [docs/02-页面与交互规格.md](./docs/02-页面与交互规格.md) | 各页验收要点 |
 | [docs/03-对接API清单.md](./docs/03-对接API清单.md) | 依赖后端接口 |
 | [docs/04-开发任务清单.md](./docs/04-开发任务清单.md) | backlog |
-| [docs/05-项目定位与整体架构分析.md](./docs/05-项目定位与整体架构分析.md) | 本仓在五仓体系中的作用 |
+| [docs/05-开发交接-Codex.md](./docs/05-开发交接-Codex.md) | AI 开发代理任务书（Codex 专用） |
+| [docs/06-协作看板.md](./docs/06-协作看板.md) | 任务流转 + 后端接口可用状态 |
+| [docs/07-项目定位与整体架构分析.md](./docs/07-项目定位与整体架构分析.md) | 本仓在五仓体系中的作用 |
+| [docs/api-openapi.json](./docs/api-openapi.json) | 后端 OpenAPI 契约快照 |
 
-## 技术建议（可改）
+## 技术栈（已定，详见 docs/05）
 
-- Vue / React 任一；优先与后端同栈便于样机迭代  
-- 鉴权走业务后端 JWT/Session；小智智控台用外链，避免双写智能体配置  
+- Vue 3 + Composition API + `<script setup>` + Vite；UI 用 Element Plus
+- Pinia 状态、Vue Router 守卫、axios 实例（Bearer + 401 拦截）
+- 鉴权走业务后端 JWT；小智智控台用外链，避免双写智能体配置
