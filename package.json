@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "> 职责：登录、设备、人设设置、历史/记忆管理、外设状态、知识库运营（管理员）、对接小智智控台入口。   > 首版定位：**调试/资产向管理台**，不是消费级潮玩 App。   > 终端用户手机/桌面客户端 → 见 [`../ai-pet-app`](../ai-pet-app/README.md)。",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build && node scripts/create-worker.mjs",
+    "build": "node scripts/clean-dist.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "repository": {
@@ -31,9 +31,12 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.37.1",
+    "@types/node": "^22.19.19",
     "@vitejs/plugin-vue": "^6.0.8",
     "typescript": "~5.9.3",
     "vite": "^8.2.0",
-    "vue-tsc": "^3.3.9"
+    "vue-tsc": "^3.3.9",
+    "wrangler": "^4.92.0"
   }
 }
