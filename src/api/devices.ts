@@ -1,21 +1,2 @@
-import { http } from './http'
-
-export interface Device {
-  id: number
-  device_uid: string
-  name: string | null
-  online: boolean
-  last_seen_at: string | null
-  firmware_version: string | null
-  capabilities: Record<string, unknown>
-}
-
-export interface RenameDevicePayload {
-  name: string
-}
-
-export const listDevices = () => http.get<Device[]>('/devices')
-export const getDevice = (deviceId: string | number) => http.get<Device>(`/devices/${deviceId}`)
-export const renameDevice = (deviceId: string | number, payload: RenameDevicePayload) =>
-  http.patch<Device>(`/devices/${deviceId}`, payload)
-export const unbindDevice = (deviceId: string | number) => http.delete(`/devices/${deviceId}`)
+// 设备资产管理只允许使用 admin API，用户归属由 ai-pet-app 的 binding_id 流程处理。
+export * from './adminDevices'
