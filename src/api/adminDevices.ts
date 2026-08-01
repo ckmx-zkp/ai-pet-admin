@@ -56,7 +56,12 @@ export const getAdminPersona = (deviceId: string | number) =>
   http.get<PersonaProfile>(`/admin/devices/${deviceId}/persona`)
 export const updateAdminPersona = (deviceId: string | number, payload: Omit<PersonaProfile, 'device_id' | 'kb_version'>) =>
   http.put<PersonaProfile>(`/admin/devices/${deviceId}/persona`, payload)
-export const listAdminMessages = (deviceId: string | number, params?: { limit?: number; offset?: number }) =>
+export const listAdminMessages = (deviceId: string | number, params?: {
+  from?: string
+  to?: string
+  limit?: number
+  offset?: number
+}) =>
   http.get<ChatMessage[]>(`/admin/devices/${deviceId}/messages`, { params })
 export const getAdminPeripheral = (deviceId: string | number) =>
   http.get<PeripheralState>(`/admin/devices/${deviceId}/peripheral`)
