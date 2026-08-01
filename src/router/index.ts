@@ -5,6 +5,7 @@ import LoginView from '../views/login/LoginView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import DeviceListView from '../views/devices/DeviceListView.vue'
 import DeviceDetailView from '../views/devices/DeviceDetailView.vue'
+import KnowledgeBaseView from '../views/kb/KnowledgeBaseView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,7 @@ export const router = createRouter({
         { path: '', redirect: '/devices' },
         { path: 'devices', component: DeviceListView },
         { path: 'devices/:id', component: DeviceDetailView, props: true },
+        { path: 'kb', component: KnowledgeBaseView },
         {
           path: 'persona',
           redirect: () => selectedDeviceRedirect('persona'),

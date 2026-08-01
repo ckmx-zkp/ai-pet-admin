@@ -13,7 +13,7 @@ const menuItems = computed(() => [
   { index: '/memories', label: '记忆管理', enabled: false },
   { index: '/analyses', label: '分析', enabled: true },
   { index: '/peripheral', label: '外设状态', enabled: true },
-  ...(auth.isAdmin ? [{ index: '/kb', label: '知识库', enabled: false }] : []),
+  ...(auth.isAdmin ? [{ index: '/kb', label: '知识库', enabled: true }] : []),
 ])
 
 function signOut() { auth.signOut(); router.replace('/login') }
