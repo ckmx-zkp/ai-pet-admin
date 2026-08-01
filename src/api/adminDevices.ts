@@ -19,7 +19,9 @@ export interface PersonaProfile {
   overrides: Record<string, unknown>
   follow_latest: boolean
   kb_version: number | null
+  dossier: PersonaDossier
 }
+export interface PersonaDossier { identity: string; background: string[]; roles: string[]; goals: string[]; evolution_rules: string[]; relationship: string }
 
 export interface ChatMessage {
   id: number
