@@ -10,7 +10,7 @@ const menuItems = computed(() => [
   { index: '/devices', label: '设备管理', enabled: true },
   { index: '/persona', label: '人设设置', enabled: true },
   { index: '/messages', label: '对话历史', enabled: true },
-  { index: '/memories', label: '记忆管理', enabled: false },
+  { index: '/memories', label: '记忆管理', enabled: true },
   { index: '/analyses', label: '分析', enabled: true },
   { index: '/peripheral', label: '外设状态', enabled: true },
   ...(auth.isAdmin ? [{ index: '/kb', label: '知识库', enabled: true }] : []),

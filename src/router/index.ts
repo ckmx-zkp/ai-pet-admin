@@ -27,6 +27,10 @@ export const router = createRouter({
           redirect: () => selectedDeviceRedirect('messages'),
         },
         {
+          path: 'memories',
+          redirect: () => selectedDeviceRedirect('memories'),
+        },
+        {
           path: 'analyses',
           redirect: () => selectedDeviceRedirect('analyses'),
         },

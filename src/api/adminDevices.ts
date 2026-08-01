@@ -44,6 +44,17 @@ export interface Analysis {
   payload: Record<string, unknown>
   created_at: string
 }
+export interface AdminMemory {
+  id: number
+  device_id: number
+  title: string | null
+  content: string
+  status: string
+  source: string
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
 
 export const listAdminDevices = (params?: { q?: string; limit?: number; offset?: number }) =>
   http.get<AdminDevice[]>('/admin/devices', { params })
@@ -67,3 +78,7 @@ export const getAdminPeripheral = (deviceId: string | number) =>
   http.get<PeripheralState>(`/admin/devices/${deviceId}/peripheral`)
 export const listAdminAnalyses = (deviceId: string | number, params?: { limit?: number; offset?: number }) =>
   http.get<Analysis[]>(`/admin/devices/${deviceId}/analyses`, { params })
+export const listAdminMemories = (deviceId: string | number, params?: { q?: string; status?: string; limit?: number; offset?: number }) =>
+  http.get<AdminMemory[]>(`/admin/devices/${deviceId}/memories`, { params })
+export const reviewAdminMemory = (deviceId: string | number, memoryId: number, action: 'approve' | 'reject') =>
+  http.post<AdminMemory>(`/admin/devices/${deviceId}/memories/${memoryId}/${action}`)

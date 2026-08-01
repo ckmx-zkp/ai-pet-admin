@@ -3,8 +3,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  getAdminDevice, getAdminPersona, getAdminPeripheral, listAdminAnalyses, listAdminMessages, rotateBindingId,
-  updateAdminPersona, type AdminDevice, type Analysis, type ChatMessage, type PeripheralState,
+  getAdminDevice, getAdminPersona, getAdminPeripheral, listAdminAnalyses, listAdminMemories, listAdminMessages, reviewAdminMemory, rotateBindingId,
+  updateAdminPersona, type AdminDevice, type AdminMemory, type Analysis, type ChatMessage, type PeripheralState,
 } from '../../api/adminDevices'
 
 const props = defineProps<{ id: string }>()
@@ -13,16 +13,21 @@ const route = useRoute()
 const loading = ref(false)
 const rotating = ref(false)
 const device = ref<AdminDevice>()
-const validTabs = ['persona', 'messages', 'peripheral', 'analyses']
+const validTabs = ['persona', 'messages', 'memories', 'peripheral', 'analyses']
 const activeTab = ref(typeof route.query.tab === 'string' && validTabs.includes(route.query.tab) ? route.query.tab : 'persona')
 const messages = ref<ChatMessage[]>([])
+const memories = ref<AdminMemory[]>([])
+const memoryQuery = ref('')
+const memoryStatus = ref('')
+const memoryOffset = ref(0)
+const hasMoreMemories = ref(false)
 const messageRange = ref<string[]>([])
 const messageOffset = ref(0)
 const messagePageSize = 20
 const hasMoreMessages = ref(false)
 const peripheral = ref<PeripheralState>()
 const analyses = ref<Analysis[]>([])
-const tabLoading = reactive({ persona: false, messages: false, peripheral: false, analyses: false })
+const tabLoading = reactive({ persona: false, messages: false, memories: false, peripheral: false, analyses: false })
 const persona = reactive({ sun_sign: '', mbti: '', overridesText: '{}', follow_latest: true })
 const personaExists = ref(false)
 const signs = [
@@ -86,11 +91,16 @@ async function loadMessages(offset = messageOffset.value) {
 }
 function searchMessages() { loadMessages(0) }
 function resetMessageFilters() { messageRange.value = []; loadMessages(0) }
+async function loadMemories(offset = memoryOffset.value) {
+  tabLoading.memories = true
+  try { const result = await listAdminMemories(props.id, { q: memoryQuery.value || undefined, status: memoryStatus.value || undefined, limit: messagePageSize, offset }); memories.value = result.data; memoryOffset.value = offset; hasMoreMemories.value = result.data.length === messagePageSize } catch (error: any) { detailError(error, '记忆列表加载失败') } finally { tabLoading.memories = false }
+}
+async function reviewMemory(memory: AdminMemory, action: 'approve' | 'reject') { try { await reviewAdminMemory(props.id, memory.id, action); ElMessage.success(action === 'approve' ? '记忆已接受' : '记忆已驳回'); loadMemories(memoryOffset.value) } catch (error: any) { detailError(error, '记忆审核失败') } }
 async function loadPeripheral() { tabLoading.peripheral = true; try { peripheral.value = (await getAdminPeripheral(props.id)).data } catch (error: any) { if (error.response?.status !== 404) detailError(error, '外设状态加载失败') } finally { tabLoading.peripheral = false } }
 async function loadAnalyses() { tabLoading.analyses = true; try { analyses.value = (await listAdminAnalyses(props.id, { limit: 100 })).data } catch (error: any) { detailError(error, '分析记录加载失败') } finally { tabLoading.analyses = false } }
 function loadTab(name: string | number) {
   if (typeof name === 'string' && route.query.tab !== name) router.replace({ query: { ...route.query, tab: name } })
-  if (name === 'persona') loadPersona(); if (name === 'messages') loadMessages(); if (name === 'peripheral') loadPeripheral(); if (name === 'analyses') loadAnalyses()
+  if (name === 'persona') loadPersona(); if (name === 'messages') loadMessages(); if (name === 'memories') loadMemories(); if (name === 'peripheral') loadPeripheral(); if (name === 'analyses') loadAnalyses()
 }
 
 async function confirmRotate() {
@@ -132,6 +142,7 @@ onMounted(async () => { await loadDevice(); localStorage.setItem('ai-pet-admin-s
       <el-card class="detail-card" shadow="never"><el-tabs v-model="activeTab" @tab-change="loadTab">
         <el-tab-pane label="人设" name="persona"><el-alert v-if="!canEditPersona" title="设备尚未由用户认领，不能配置人设。" type="warning" :closable="false" show-icon class="tab-notice" /><el-form v-loading="tabLoading.persona" label-width="90px" class="persona-form"><el-form-item label="星座"><el-select v-model="persona.sun_sign" :disabled="!canEditPersona" placeholder="选择星座"><el-option v-for="item in signs" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item><el-form-item label="MBTI"><el-select v-model="persona.mbti" :disabled="!canEditPersona" placeholder="选择 MBTI"><el-option v-for="item in mbtis" :key="item" :label="item" :value="item" /></el-select></el-form-item><el-form-item label="跟随最新"><el-switch v-model="persona.follow_latest" :disabled="!canEditPersona" /></el-form-item><el-form-item label="补充配置"><el-input v-model="persona.overridesText" :disabled="!canEditPersona" type="textarea" :rows="5" /></el-form-item><el-form-item><el-button type="primary" :disabled="!canEditPersona" :loading="tabLoading.persona" @click="savePersona">{{ personaExists ? '保存人设' : '创建人设' }}</el-button></el-form-item></el-form></el-tab-pane>
         <el-tab-pane label="脱敏历史" name="messages"><div class="history-tools"><el-date-picker v-model="messageRange" type="datetimerange" value-format="YYYY-MM-DDTHH:mm:ss" range-separator="至" start-placeholder="开始时间" end-placeholder="结束时间" /><el-button type="primary" :loading="tabLoading.messages" @click="searchMessages">筛选</el-button><el-button @click="resetMessageFilters">重置</el-button></div><el-table v-loading="tabLoading.messages" :data="messages" empty-text="暂无脱敏历史"><el-table-column prop="created_at" label="时间" min-width="175"><template #default="{ row }">{{ formatTime(row.created_at) }}</template></el-table-column><el-table-column prop="role" label="角色" width="100" /><el-table-column prop="content_redacted" label="内容" min-width="340" show-overflow-tooltip /></el-table><div class="pagination"><el-button :disabled="messageOffset === 0 || tabLoading.messages" @click="loadMessages(Math.max(0, messageOffset - messagePageSize))">上一页</el-button><span>第 {{ Math.floor(messageOffset / messagePageSize) + 1 }} 页</span><el-button :disabled="!hasMoreMessages || tabLoading.messages" @click="loadMessages(messageOffset + messagePageSize)">下一页</el-button></div></el-tab-pane>
+        <el-tab-pane label="记忆管理" name="memories"><div class="history-tools"><el-input v-model="memoryQuery" placeholder="搜索标题或内容" clearable @keyup.enter="loadMemories(0)" /><el-select v-model="memoryStatus" placeholder="全部状态" clearable @change="loadMemories(0)"><el-option label="候选待审核" value="candidate" /><el-option label="已生效" value="active" /><el-option label="已驳回" value="rejected" /></el-select><el-button type="primary" :loading="tabLoading.memories" @click="loadMemories(0)">筛选</el-button></div><el-table v-loading="tabLoading.memories" :data="memories" empty-text="暂无记忆"><el-table-column label="标题" min-width="140"><template #default="{ row }">{{ row.title || '未命名记忆' }}</template></el-table-column><el-table-column prop="content" label="内容" min-width="280" show-overflow-tooltip /><el-table-column prop="source" label="来源" width="100" /><el-table-column label="状态" width="110"><template #default="{ row }"><el-tag :type="row.status === 'candidate' ? 'warning' : row.status === 'active' ? 'success' : 'info'">{{ row.status === 'candidate' ? '待审核' : row.status === 'active' ? '已生效' : '已驳回' }}</el-tag></template></el-table-column><el-table-column label="操作" width="130"><template #default="{ row }"><el-button v-if="row.status === 'candidate'" link type="success" @click="reviewMemory(row, 'approve')">接受</el-button><el-button v-if="row.status === 'candidate'" link type="danger" @click="reviewMemory(row, 'reject')">驳回</el-button></template></el-table-column></el-table><div class="pagination"><el-button :disabled="memoryOffset === 0 || tabLoading.memories" @click="loadMemories(Math.max(0, memoryOffset - messagePageSize))">上一页</el-button><span>第 {{ Math.floor(memoryOffset / messagePageSize) + 1 }} 页</span><el-button :disabled="!hasMoreMemories || tabLoading.memories" @click="loadMemories(memoryOffset + messagePageSize)">下一页</el-button></div></el-tab-pane>
         <el-tab-pane label="外设状态" name="peripheral"><el-descriptions v-if="peripheral" v-loading="tabLoading.peripheral" :column="1" border><el-descriptions-item label="眼睛情绪">{{ peripheral.eye_emotion || '暂无' }}</el-descriptions-item><el-descriptions-item label="注视方向">{{ peripheral.eye_gaze || '暂无' }}</el-descriptions-item><el-descriptions-item label="闭眼">{{ peripheral.eye_closed === null ? '暂无' : peripheral.eye_closed ? '是' : '否' }}</el-descriptions-item><el-descriptions-item label="更新时间">{{ formatTime(peripheral.updated_at) }}</el-descriptions-item><el-descriptions-item label="扩展数据"><pre>{{ pretty(peripheral.extra) }}</pre></el-descriptions-item></el-descriptions><el-empty v-else v-loading="tabLoading.peripheral" description="暂无外设状态上报" /></el-tab-pane>
         <el-tab-pane label="分析" name="analyses"><el-table v-loading="tabLoading.analyses" :data="analyses" empty-text="暂无分析记录"><el-table-column prop="kind" label="类型" width="160" /><el-table-column label="生成时间" width="180"><template #default="{ row }">{{ formatTime(row.created_at) }}</template></el-table-column><el-table-column label="结果"><template #default="{ row }"><pre>{{ pretty(row.payload) }}</pre></template></el-table-column></el-table></el-tab-pane>
       </el-tabs></el-card>
