@@ -8,11 +8,11 @@ const router = useRouter()
 const consoleUrl = import.meta.env.VITE_XIAOZHI_CONSOLE_URL
 const menuItems = computed(() => [
   { index: '/devices', label: '设备管理', enabled: true },
-  { index: '/persona', label: '人设设置', enabled: false },
-  { index: '/messages', label: '对话历史', enabled: false },
+  { index: '/persona', label: '人设设置', enabled: true },
+  { index: '/messages', label: '对话历史', enabled: true },
   { index: '/memories', label: '记忆管理', enabled: false },
-  { index: '/analyses', label: '分析', enabled: false },
-  { index: '/peripheral', label: '外设状态', enabled: false },
+  { index: '/analyses', label: '分析', enabled: true },
+  { index: '/peripheral', label: '外设状态', enabled: true },
   ...(auth.isAdmin ? [{ index: '/kb', label: '知识库', enabled: false }] : []),
 ])
 

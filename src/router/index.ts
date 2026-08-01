@@ -16,11 +16,32 @@ export const router = createRouter({
         { path: '', redirect: '/devices' },
         { path: 'devices', component: DeviceListView },
         { path: 'devices/:id', component: DeviceDetailView, props: true },
+        {
+          path: 'persona',
+          redirect: () => selectedDeviceRedirect('persona'),
+        },
+        {
+          path: 'messages',
+          redirect: () => selectedDeviceRedirect('messages'),
+        },
+        {
+          path: 'analyses',
+          redirect: () => selectedDeviceRedirect('analyses'),
+        },
+        {
+          path: 'peripheral',
+          redirect: () => selectedDeviceRedirect('peripheral'),
+        },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/devices' },
   ],
 })
+
+function selectedDeviceRedirect(tab: string) {
+  const deviceId = localStorage.getItem('ai-pet-admin-selected-device')
+  return deviceId ? { path: `/devices/${deviceId}`, query: { tab } } : '/devices'
+}
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore(pinia)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getAdminDevice, getAdminPersona, getAdminPeripheral, listAdminAnalyses, listAdminMessages, rotateBindingId,
@@ -9,10 +9,12 @@ import {
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const rotating = ref(false)
 const device = ref<AdminDevice>()
-const activeTab = ref('persona')
+const validTabs = ['persona', 'messages', 'peripheral', 'analyses']
+const activeTab = ref(typeof route.query.tab === 'string' && validTabs.includes(route.query.tab) ? route.query.tab : 'persona')
 const messages = ref<ChatMessage[]>([])
 const peripheral = ref<PeripheralState>()
 const analyses = ref<Analysis[]>([])
@@ -60,7 +62,10 @@ async function savePersona() {
 async function loadMessages() { tabLoading.messages = true; try { messages.value = (await listAdminMessages(props.id, { limit: 100 })).data } catch (error: any) { detailError(error, '脱敏历史加载失败') } finally { tabLoading.messages = false } }
 async function loadPeripheral() { tabLoading.peripheral = true; try { peripheral.value = (await getAdminPeripheral(props.id)).data } catch (error: any) { if (error.response?.status !== 404) detailError(error, '外设状态加载失败') } finally { tabLoading.peripheral = false } }
 async function loadAnalyses() { tabLoading.analyses = true; try { analyses.value = (await listAdminAnalyses(props.id, { limit: 100 })).data } catch (error: any) { detailError(error, '分析记录加载失败') } finally { tabLoading.analyses = false } }
-function loadTab(name: string | number) { if (name === 'persona') loadPersona(); if (name === 'messages') loadMessages(); if (name === 'peripheral') loadPeripheral(); if (name === 'analyses') loadAnalyses() }
+function loadTab(name: string | number) {
+  if (typeof name === 'string' && route.query.tab !== name) router.replace({ query: { ...route.query, tab: name } })
+  if (name === 'persona') loadPersona(); if (name === 'messages') loadMessages(); if (name === 'peripheral') loadPeripheral(); if (name === 'analyses') loadAnalyses()
+}
 
 async function confirmRotate() {
   if (!device.value) return
@@ -73,7 +78,13 @@ async function confirmRotate() {
 async function copyBindingId() { if (!device.value) return; await navigator.clipboard.writeText(device.value.binding_id); ElMessage.success('绑定码已复制') }
 
 watch(() => props.id, async () => { await loadDevice(); loadTab(activeTab.value) })
-onMounted(async () => { await loadDevice(); loadPersona() })
+watch(() => route.query.tab, (tab) => {
+  if (typeof tab === 'string' && validTabs.includes(tab) && tab !== activeTab.value) {
+    activeTab.value = tab
+    loadTab(tab)
+  }
+})
+onMounted(async () => { await loadDevice(); localStorage.setItem('ai-pet-admin-selected-device', props.id); loadTab(activeTab.value) })
 </script>
 
 <template>
