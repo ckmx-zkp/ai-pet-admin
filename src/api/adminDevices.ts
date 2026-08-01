@@ -76,7 +76,7 @@ export const listAdminMessages = (deviceId: string | number, params?: {
   http.get<ChatMessage[]>(`/admin/devices/${deviceId}/messages`, { params })
 export const getAdminPeripheral = (deviceId: string | number) =>
   http.get<PeripheralState>(`/admin/devices/${deviceId}/peripheral`)
-export const listAdminAnalyses = (deviceId: string | number, params?: { limit?: number; offset?: number }) =>
+export const listAdminAnalyses = (deviceId: string | number, params?: { kind?: string; limit?: number; offset?: number }) =>
   http.get<Analysis[]>(`/admin/devices/${deviceId}/analyses`, { params })
 export const listAdminMemories = (deviceId: string | number, params?: { q?: string; status?: string; limit?: number; offset?: number }) =>
   http.get<AdminMemory[]>(`/admin/devices/${deviceId}/memories`, { params })
