@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   createMbtiDraft,
@@ -33,10 +33,55 @@ const offset = ref(0)
 const pageSize = 20
 const hasMore = ref(false)
 const form = reactive({ level: 'sign', key: '', parent_key: '', payloadText: '{}' })
+const historyDialog = ref(false)
+const historyKey = ref('')
+const historyRows = ref<KBEntry[]>([])
+
+const ZODIAC_LABELS: Record<string, string> = {
+  aries: '白羊座', taurus: '金牛座', gemini: '双子座', cancer: '巨蟹座',
+  leo: '狮子座', virgo: '处女座', libra: '天秤座', scorpio: '天蝎座',
+  sagittarius: '射手座', capricorn: '摩羯座', aquarius: '水瓶座', pisces: '双鱼座',
+  fire: '火相', earth: '土相', air: '风相', water: '水相',
+  cardinal: '基本宫', fixed: '固定宫', mutable: '变动宫',
+}
+const MBTI_LABELS: Record<string, string> = {
+  INTJ: '建筑师', INTP: '逻辑学家', ENTJ: '指挥官', ENTP: '辩论家',
+  INFJ: '提倡者', INFP: '调停者', ENFJ: '主人公', ENFP: '竞选者',
+  ISTJ: '物流师', ISFJ: '守卫者', ESTJ: '总经理', ESFJ: '执政官',
+  ISTP: '鉴赏家', ISFP: '探险家', ESTP: '企业家', ESFP: '表演者',
+}
+const LEVEL_LABELS: Record<string, string> = { element: '元素', sign: '星座', modality: '模式' }
+
+function keyLabel(key: string): string {
+  return ZODIAC_LABELS[key] || MBTI_LABELS[key.toUpperCase()] || ''
+}
+function levelLabel(level?: string): string {
+  return level ? LEVEL_LABELS[level] || level : ''
+}
 
 function pretty(value: Record<string, unknown>) {
   return JSON.stringify(value, null, 2)
 }
+
+function latestPerKey(rows: KBEntry[]): KBEntry[] {
+  const byKey = new Map<string, KBEntry>()
+  for (const row of rows) {
+    const current = byKey.get(row.key)
+    if (!current || row.version > current.version) byKey.set(row.key, row)
+  }
+  return [...byKey.values()]
+}
+
+function showHistory(key: string) {
+  historyKey.value = key
+  historyRows.value = entries.value.filter((row) => row.key === key).sort((a, b) => b.version - a.version)
+  historyDialog.value = true
+}
+
+const displayedEntries = computed(() => {
+  if (status.value !== 'published') return entries.value
+  return latestPerKey(entries.value).sort((a, b) => a.key.localeCompare(b.key))
+})
 
 function summarizePayload(payload: Record<string, unknown>): string {
   const fragments = payload.prompt_fragments
@@ -150,7 +195,7 @@ onMounted(() => load(0))
     <div class="heading">
       <div>
         <h1>知识库运营</h1>
-        <p>已发布条目不可修改；请先创建或编辑草稿，再人工确认发布。</p>
+        <p>这里管理 AI 和用户聊天时使用的「人设话术片段」——按星座、MBTI 性格类型配置不同的语气和沟通方式。已发布内容不可直接修改，需先创建或编辑草稿，人工确认后再发布新版本（旧版本历史仍会保留，供追溯）。</p>
       </div>
       <el-button v-if="active !== 'feedback'" type="primary" @click="openDraft()">新建草稿</el-button>
     </div>
@@ -169,22 +214,34 @@ onMounted(() => load(0))
       <el-input v-if="active !== 'feedback'" v-model="keyword" placeholder="按键值筛选" clearable @keyup.enter="load(0)" />
       <el-button :loading="loading" @click="load(offset)">刷新</el-button>
     </div>
-    <el-table v-if="active !== 'feedback'" v-loading="loading" :data="entries" empty-text=" ">
-      <el-table-column prop="key" label="键值" min-width="120" />
-      <el-table-column v-if="active === 'zodiac'" prop="level" label="层级" width="100" />
-      <el-table-column prop="version" label="版本" width="80" />
-      <el-table-column label="状态" width="100">
+    <el-table v-if="active !== 'feedback'" v-loading="loading" :data="displayedEntries" empty-text=" ">
+      <el-table-column label="名称" min-width="160">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'published' ? 'success' : 'warning'">{{ row.status === 'published' ? '已发布' : '草稿' }}</el-tag>
+          <div class="key-cell">
+            <strong>{{ keyLabel(row.key) || row.key }}</strong>
+            <span v-if="keyLabel(row.key)" class="key-code">{{ row.key }}</span>
+          </div>
         </template>
       </el-table-column>
-      <el-table-column label="内容摘要" min-width="320">
+      <el-table-column v-if="active === 'zodiac'" label="分类" width="100">
+        <template #default="{ row }">{{ levelLabel(row.level) }}</template>
+      </el-table-column>
+      <el-table-column label="当前版本" width="100">
+        <template #default="{ row }">v{{ row.version }}</template>
+      </el-table-column>
+      <el-table-column label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'published' ? 'success' : 'warning'">{{ row.status === 'published' ? '已发布（生效中）' : '草稿（未生效）' }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="话术内容摘要" min-width="320">
         <template #default="{ row }">{{ summarizePayload(row.payload) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="140">
+      <el-table-column label="操作" width="180">
         <template #default="{ row }">
           <el-button v-if="row.status === 'draft'" link type="primary" @click="openDraft(row)">编辑</el-button>
           <el-button v-if="row.status === 'draft'" link type="success" @click="publish(row)">发布</el-button>
+          <el-button v-if="status === 'published'" link @click="showHistory(row.key)">历史版本</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -232,6 +289,27 @@ onMounted(() => load(0))
         <el-button type="primary" :loading="submitting" @click="saveDraft">保存草稿</el-button>
       </template>
     </el-dialog>
+    <el-dialog v-model="historyDialog" :title="`${keyLabel(historyKey) || historyKey} 历史版本`" width="min(92vw, 640px)">
+      <el-table :data="historyRows" empty-text="暂无历史版本">
+        <el-table-column label="版本" width="80">
+          <template #default="{ row }">v{{ row.version }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="140">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'published' ? 'success' : 'warning'">{{ row.status === 'published' ? '已发布（生效中）' : '草稿' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="更新时间" width="180">
+          <template #default="{ row }">{{ row.updated_at }}</template>
+        </el-table-column>
+        <el-table-column label="内容摘要" min-width="260">
+          <template #default="{ row }">{{ summarizePayload(row.payload) }}</template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="historyDialog = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -241,6 +319,8 @@ onMounted(() => load(0))
 .heading p { margin: 0; color: #6b7280; }
 .filters { display: flex; gap: 12px; margin: 0 0 16px; }
 .filters .el-input { max-width: 360px; }
+.key-cell { display: flex; align-items: baseline; gap: 6px; }
+.key-code { color: #9ca3af; font-size: 12px; }
 @media (max-width: 680px) {
   .heading, .filters { align-items: stretch; flex-direction: column; }
   .filters .el-input { max-width: none; }
