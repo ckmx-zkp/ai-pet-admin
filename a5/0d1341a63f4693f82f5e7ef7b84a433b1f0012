@@ -1,0 +1,77 @@
+src/layouts/MainLayout.vue
+  s_13bd5a30c95ef5::t_4c1c7034358c95 3-4,6,9,12-18,20-22,24-25,29-53,63-64
+  s_dc81647dd90462::t_880073ba2d03e9 62
+  s_c5e35584587074::t_083c8731a1e855 26-28
+src/router/index.ts
+  s_fa0ee76f926f7e::t_7b5fae78ecb8a3 9,49-52
+src/utils/selectedDevice.ts
+  s_84445d60184518::t_cff5d5c573f616 1-16
+src/views/devices/DeviceDetailView.vue
+  s_ac481e58d4e655::t_94a37bbdb61a18 25,303
+src/views/devices/DeviceListView.vue
+  s_547cb23f0c3ccb::t_895815c1c53d2d 2-3,11,63-71,79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a50d1341a63f4693f82f5e7ef7b84a433b1f0012",
+  "prompts": {},
+  "sessions": {
+    "s_13bd5a30c95ef5": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042644364903100",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_547cb23f0c3ccb": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042671556354100",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_84445d60184518": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042642723182600",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_ac481e58d4e655": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042669793222800",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_c5e35584587074": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042688592570800",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_dc81647dd90462": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042702466026000",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_fa0ee76f926f7e": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787042668642604700",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    }
+  }
+}
