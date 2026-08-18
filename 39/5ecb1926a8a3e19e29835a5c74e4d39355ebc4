@@ -1,0 +1,92 @@
+src/components/OffsetPager.vue
+  s_fe687259451cc8::t_050e5a5867e4c2 1-22
+src/utils/feedback.ts
+  s_c72eafbbc5f565::t_11b2e029ae7a0e 1-26
+src/views/kb/KnowledgeBaseView.vue
+  s_2f26717cc9e0fa::t_52e3218780146e 39,41-50,79,88,116,127,137,143,247
+  s_eb774045fc6449::t_bdd84d1a258c1b 4-20,22-34,36-38,40,51-78,80-87,89-115,117-126,128-136,138-142,144-145,147-246,248
+docs/05-开发交接-Codex.md
+  s_8e60464cddc131::t_9a8c57882239fd 4-5
+src/views/login/LoginView.vue
+  s_bc92f34f43670c::t_8a94528027ccbe 7,35
+src/components/PageEmpty.vue
+  s_8f5892ae27ebff::t_03049527de3acf 1-14
+docs/02-页面与交互规格.md
+  s_eb774045fc6449::t_c12c4858851dae 3-4,7-9,11,13-17,21-26,30-31,35-37,41-44,48-49,53-56,60-62,66-69
+docs/03-对接API清单.md
+  s_eb774045fc6449::t_e07d5a72822dcf 3,9-20,25-26,29-30,33-36
+docs/04-开发任务清单.md
+  s_eb774045fc6449::t_1f5b996008de88 5-7,9,11-16,20-22,26-30,34-35
+docs/06-协作看板.md
+  s_eb774045fc6449::t_628ebe68ded2fc 5,13-16,22,26-28,30,32,37-48,56-60,64-67,75-77
+package-lock.json
+  s_eb774045fc6449::t_f93cd2ed52fdbe 312,326,343,360,377,394,411,428,445,462,479,496,513,530,547,564,581,598,615,632,649,666,683,700,717,734,751,1336,1411,1428,1445,1462,1479,1496,1513,1530,1547,1564,1581,1598,1612,1631,1648,1689,1713,1722,1724,1863,2314,2419,2617,2638,2659,2680,2701,2722,2743,2764,2785,2806,2827,2862-2863,2869-2870,3084,3188,3323,3333,3362,3371,3452,3537,3640
+src/views/devices/DeviceDetailView.vue
+  s_eb774045fc6449::t_1c043058a6a26d 6-19,21-24,45,51-64,77-85,89-95,100,103-115,117-121,126-135,138-160,165,176-189,191,194-219,221-256,259-263,269-281,284-288,290-293,300-304,309-313,315,318-329,331-344,346-534,541-554
+src/views/devices/DeviceListView.vue
+  s_eb774045fc6449::t_e1798a3d2514f9 6-8,12,15-18,20-21,23,25-34,39-40,42,44-51,53-59,62,67-72,75,77,79-82,85-102,104-117,122-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "395ecb1926a8a3e19e29835a5c74e4d39355ebc4",
+  "prompts": {},
+  "sessions": {
+    "s_2f26717cc9e0fa": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787041618617236000",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_8e60464cddc131": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787041703689515500",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_8f5892ae27ebff": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787041456897469700",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_bc92f34f43670c": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787041598124276400",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_c72eafbbc5f565": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787041456017416500",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_eb774045fc6449": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a012ed-0c1b-7c40-9478-ca5dd94206e1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_fe687259451cc8": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787041458609893200",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    }
+  }
+}
