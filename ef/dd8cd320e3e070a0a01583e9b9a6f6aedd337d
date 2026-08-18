@@ -1,0 +1,31 @@
+.grok/rules/auto-commit-deploy.md
+  s_8a5336a3854d3b::t_b89fb109a579ad 1-10
+AGENTS.md
+  s_eb774045fc6449::t_017c2252257c5c 31-39
+docs/06-协作看板.md
+  s_eb774045fc6449::t_38490e85fe6d16 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "efdd8cd320e3e070a0a01583e9b9a6f6aedd337d",
+  "prompts": {},
+  "sessions": {
+    "s_8a5336a3854d3b": {
+      "agent_id": {
+        "tool": "mock_ai",
+        "id": "ai-thread-1787051900135344900",
+        "model": "unknown"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    },
+    "s_eb774045fc6449": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a012ed-0c1b-7c40-9478-ca5dd94206e1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "kunpeng2.zhang <kunpeng2.zhang@ly.com>"
+    }
+  }
+}
