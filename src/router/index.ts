@@ -6,6 +6,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import DeviceListView from '../views/devices/DeviceListView.vue'
 import DeviceDetailView from '../views/devices/DeviceDetailView.vue'
 import KnowledgeBaseView from '../views/kb/KnowledgeBaseView.vue'
+import { getSelectedDeviceId } from '../utils/selectedDevice'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -45,8 +46,10 @@ export const router = createRouter({
 })
 
 function selectedDeviceRedirect(tab: string) {
-  const deviceId = localStorage.getItem('ai-pet-admin-selected-device')
-  return deviceId ? { path: `/devices/${deviceId}`, query: { tab } } : '/devices'
+  const deviceId = getSelectedDeviceId()
+  return deviceId
+    ? { path: `/devices/${deviceId}`, query: { tab } }
+    : { path: '/devices', query: { needDevice: '1' } }
 }
 
 router.beforeEach(async (to) => {

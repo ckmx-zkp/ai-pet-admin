@@ -1,20 +1,56 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
+import { getSelectedDeviceId, isDeviceTab, type DeviceTab } from '../utils/selectedDevice'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const consoleUrl = import.meta.env.VITE_XIAOZHI_CONSOLE_URL
+const tabItems: Array<{ index: DeviceTab; label: string }> = [
+  { index: 'persona', label: '人设设置' },
+  { index: 'messages', label: '对话历史' },
+  { index: 'memories', label: '记忆管理' },
+  { index: 'analyses', label: '分析' },
+  { index: 'peripheral', label: '外设状态' },
+]
 const menuItems = computed(() => [
-  { index: '/devices', label: '设备管理', enabled: true },
-  { index: '/persona', label: '人设设置', enabled: true },
-  { index: '/messages', label: '对话历史', enabled: true },
-  { index: '/memories', label: '记忆管理', enabled: true },
-  { index: '/analyses', label: '分析', enabled: true },
-  { index: '/peripheral', label: '外设状态', enabled: true },
-  ...(auth.isAdmin ? [{ index: '/kb', label: '知识库', enabled: true }] : []),
+  { index: 'devices', label: '设备管理' },
+  ...tabItems,
+  ...(auth.isAdmin ? [{ index: 'kb', label: '知识库' }] : []),
 ])
+const activeMenu = computed(() => {
+  if (route.path === '/kb') return 'kb'
+  if (route.path.startsWith('/devices/') && route.params.id) {
+    return isDeviceTab(route.query.tab) ? route.query.tab : 'persona'
+  }
+  return 'devices'
+})
+
+function currentDeviceId() {
+  return typeof route.params.id === 'string' && route.params.id ? route.params.id : getSelectedDeviceId()
+}
+
+function openMenu(index: string) {
+  if (index === 'devices') {
+    router.push('/devices')
+    return
+  }
+  if (index === 'kb') {
+    router.push('/kb')
+    return
+  }
+  if (!isDeviceTab(index)) return
+  const deviceId = currentDeviceId()
+  if (!deviceId) {
+    ElMessage.warning('请先在设备列表中打开一台设备')
+    if (route.path !== '/devices') router.push({ path: '/devices', query: { needDevice: '1' } })
+    return
+  }
+  router.push({ path: `/devices/${deviceId}`, query: { tab: index } })
+}
 
 function signOut() { auth.signOut(); router.replace('/login') }
 </script>
@@ -23,9 +59,9 @@ function signOut() { auth.signOut(); router.replace('/login') }
   <el-container class="shell">
     <el-aside width="220px" class="sidebar">
       <div class="brand">AI Pet 管理台</div>
-      <el-menu :default-active="$route.path" router background-color="#1f2937" text-color="#d1d5db" active-text-color="#ffffff">
-        <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.enabled ? item.index : ''" :disabled="!item.enabled">
-          {{ item.label }}<el-tag v-if="!item.enabled" size="small" type="info" class="soon">后续</el-tag>
+      <el-menu :key="activeMenu" :default-active="activeMenu" background-color="#1f2937" text-color="#d1d5db" active-text-color="#ffffff" @select="openMenu">
+        <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
+          {{ item.label }}
         </el-menu-item>
       </el-menu>
     </el-aside>

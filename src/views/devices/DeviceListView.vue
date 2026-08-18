@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { listAdminDevices, lookupAdminDevice, type AdminDevice } from '../../api/adminDevices'
 import OffsetPager from '../../components/OffsetPager.vue'
@@ -8,6 +8,7 @@ import PageEmpty from '../../components/PageEmpty.vue'
 import { formatDateTime, requestErrorMessage } from '../../utils/feedback'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const loadError = ref('')
 const devices = ref<AdminDevice[]>([])
@@ -59,7 +60,15 @@ async function lookupDevice() {
   }
 }
 
-onMounted(() => loadDevices(0))
+function notifyNeedDevice() {
+  if (route.query.needDevice === '1') ElMessage.warning('请先在列表中打开一台设备，再查看人设、历史、记忆或分析')
+}
+
+onMounted(() => {
+  loadDevices(0)
+  notifyNeedDevice()
+})
+watch(() => route.query.needDevice, notifyNeedDevice)
 </script>
 
 <template>
@@ -67,7 +76,7 @@ onMounted(() => loadDevices(0))
     <div class="page-heading">
       <div>
         <h1>设备资产管理</h1>
-        <p>查看全量设备资产；设备认领仍仅由用户端 binding_id 流程完成。</p>
+        <p>查看全量设备资产；人设、历史、记忆、分析与外设需先点进一台设备。设备认领仍仅由用户端 binding_id 完成。</p>
       </div>
     </div>
     <el-alert title="管理员可查看和轮换绑定码，但不能修改设备的用户归属。" type="info" :closable="false" show-icon class="notice" />

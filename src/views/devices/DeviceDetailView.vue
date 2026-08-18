@@ -22,6 +22,7 @@ import AnalysisCardList from '../../components/AnalysisCardList.vue'
 import OffsetPager from '../../components/OffsetPager.vue'
 import PageEmpty from '../../components/PageEmpty.vue'
 import { formatDateTime, requestErrorMessage } from '../../utils/feedback'
+import { setSelectedDeviceId } from '../../utils/selectedDevice'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -299,7 +300,7 @@ watch(() => route.query.tab, (tab) => {
 })
 onMounted(async () => {
   await loadDevice()
-  localStorage.setItem('ai-pet-admin-selected-device', props.id)
+  setSelectedDeviceId(props.id)
   loadTab(activeTab.value)
 })
 </script>
