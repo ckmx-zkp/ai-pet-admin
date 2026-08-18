@@ -7,6 +7,18 @@ defineProps<{ items: Analysis[] }>()
 const kindLabels: Record<string, string> = {
   daily_summary: '每日摘要',
   persona_growth: '人设成长建议',
+  memory_profile: '记忆画像',
+  relationship_update: '关系推断',
+}
+
+const relationshipKindLabels: Record<string, string> = {
+  partner: '情感伴侣',
+  rebellious_child: '逆子',
+  beloved_child: '爱子',
+  love_hate: '相爱相杀',
+  confidant: '知己',
+  companion: '陪伴伙伴',
+  guardian: '守护者',
 }
 
 const decisionLabels: Record<string, string> = {
@@ -56,11 +68,13 @@ function kindLabel(kind: string): string {
 
 function statusType(kind: string, payload: Record<string, unknown>): 'success' | 'warning' | 'info' | 'danger' {
   if (kind === 'daily_summary' && isEmptySummary(payload)) return 'info'
+  if (kind === 'memory_profile' && payload.memory_count === 0) return 'info'
   if (payload.applied === true) return 'success'
   const decision = String(payload.decision || '')
   if (decision === 'approve') return 'success'
   if (decision === 'reject') return 'danger'
   if (decision === 'candidate') return 'warning'
+  if (kind === 'relationship_update') return decision === 'hold' ? 'info' : 'success'
   if (payload.status === 'failed' || payload.error) return 'danger'
   if (payload.status === 'pending' || payload.status === 'running') return 'warning'
   return 'info'
@@ -70,6 +84,8 @@ function statusText(kind: string, payload: Record<string, unknown>): string {
   if (payload.status === 'pending' || payload.status === 'running') return '生成中'
   if (payload.status === 'failed' || payload.error) return '生成失败'
   if (kind === 'daily_summary' && isEmptySummary(payload)) return '无足够内容'
+  if (kind === 'memory_profile' && payload.memory_count === 0) return '暂无记忆'
+  if (kind === 'relationship_update') return payload.decision === 'hold' ? '证据不足' : '已推断'
   if (payload.applied === true) return '已应用'
   if (typeof payload.decision === 'string' && decisionLabels[payload.decision]) return decisionLabels[payload.decision]
   return '已生成'
@@ -126,6 +142,36 @@ function statusText(kind: string, payload: Record<string, unknown>): string {
               </li>
             </ul>
             <span v-else>无建议覆盖项</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+
+      <template v-else-if="item.kind === 'memory_profile'">
+        <el-empty v-if="asRecord(item.payload).memory_count === 0" description="暂无已确认的长期记忆" :image-size="64" />
+        <el-descriptions v-else :column="1" border>
+          <el-descriptions-item label="陪伴影响">{{ String(asRecord(item.payload).companion_impact || '暂无') }}</el-descriptions-item>
+          <el-descriptions-item label="记忆条目">
+            <ul v-if="Array.isArray(asRecord(item.payload).remembered) && (asRecord(item.payload).remembered as unknown[]).length" class="list">
+              <li v-for="(entry, index) in (asRecord(item.payload).remembered as Array<Record<string, unknown>>)" :key="index">
+                <strong>{{ String(entry.title || '未命名') }}</strong>：{{ String(entry.summary || '') }}
+                <template v-if="asTextList(entry.tags).length"> ({{ asTextList(entry.tags).join('、') }})</template>
+              </li>
+            </ul>
+            <span v-else>暂无</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+
+      <template v-else-if="item.kind === 'relationship_update'">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="推断关系">{{ relationshipKindLabels[String(asRecord(item.payload).kind || '')] || String(asRecord(item.payload).label || '暂无') }}</el-descriptions-item>
+          <el-descriptions-item label="说明">{{ String(asRecord(item.payload).summary || '暂无') }}</el-descriptions-item>
+          <el-descriptions-item label="置信度">{{ confidenceText(asRecord(item.payload).confidence) }}</el-descriptions-item>
+          <el-descriptions-item label="证据">
+            <ul v-if="asTextList(asRecord(item.payload).evidence).length" class="list">
+              <li v-for="line in asTextList(asRecord(item.payload).evidence)" :key="line">{{ line }}</li>
+            </ul>
+            <span v-else>暂无</span>
           </el-descriptions-item>
         </el-descriptions>
       </template>

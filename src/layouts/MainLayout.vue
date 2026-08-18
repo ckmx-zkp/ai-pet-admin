@@ -15,14 +15,16 @@ const tabItems: Array<{ index: DeviceTab; label: string }> = [
   { index: 'memories', label: '记忆管理' },
   { index: 'analyses', label: '分析' },
   { index: 'peripheral', label: '外设状态' },
+  { index: 'fortune', label: '运势核对' },
 ]
 const menuItems = computed(() => [
   { index: 'devices', label: '设备管理' },
   ...tabItems,
-  ...(auth.isAdmin ? [{ index: 'kb', label: '知识库' }] : []),
+  ...(auth.isAdmin ? [{ index: 'kb', label: '知识库' }, { index: 'ops', label: '运营指标' }] : []),
 ])
 const activeMenu = computed(() => {
   if (route.path === '/kb') return 'kb'
+  if (route.path === '/ops') return 'ops'
   if (route.path.startsWith('/devices/') && route.params.id) {
     return isDeviceTab(route.query.tab) ? route.query.tab : 'persona'
   }
@@ -40,6 +42,10 @@ function openMenu(index: string) {
   }
   if (index === 'kb') {
     router.push('/kb')
+    return
+  }
+  if (index === 'ops') {
+    router.push('/ops')
     return
   }
   if (!isDeviceTab(index)) return

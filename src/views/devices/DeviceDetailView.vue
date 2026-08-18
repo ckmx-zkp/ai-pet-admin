@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
+  getAdminDailyFortune,
   getAdminDevice,
   getAdminPersona,
   getAdminPeripheral,
@@ -15,7 +16,9 @@ import {
   type AdminDevice,
   type AdminMemory,
   type Analysis,
+  type BondView,
   type ChatMessage,
+  type DailyFortune,
   type PeripheralState,
 } from '../../api/adminDevices'
 import AnalysisCardList from '../../components/AnalysisCardList.vue'
@@ -30,7 +33,7 @@ const route = useRoute()
 const loading = ref(false)
 const rotating = ref(false)
 const device = ref<AdminDevice>()
-const validTabs = ['persona', 'messages', 'memories', 'peripheral', 'analyses']
+const validTabs = ['persona', 'messages', 'memories', 'peripheral', 'analyses', 'fortune']
 const activeTab = ref(typeof route.query.tab === 'string' && validTabs.includes(route.query.tab) ? route.query.tab : 'persona')
 const messages = ref<ChatMessage[]>([])
 const memories = ref<AdminMemory[]>([])
@@ -48,8 +51,11 @@ const analyses = ref<Analysis[]>([])
 const analysisKind = ref('')
 const analysisOffset = ref(0)
 const hasMoreAnalyses = ref(false)
-const tabLoading = reactive({ persona: false, messages: false, memories: false, peripheral: false, analyses: false })
-const tabError = reactive({ persona: '', messages: '', memories: '', peripheral: '', analyses: '' })
+const fortuneDate = ref('')
+const fortune = ref<DailyFortune>()
+const fortuneNotConfigured = ref(false)
+const tabLoading = reactive({ persona: false, messages: false, memories: false, peripheral: false, analyses: false, fortune: false })
+const tabError = reactive({ persona: '', messages: '', memories: '', peripheral: '', analyses: '', fortune: '' })
 const persona = reactive({
   sun_sign: '',
   mbti: '',
@@ -64,6 +70,16 @@ const persona = reactive({
   relationship: '',
 })
 const personaExists = ref(false)
+const bond = ref<BondView | null>(null)
+const relationshipKindLabels: Record<string, string> = {
+  partner: '情感伴侣',
+  rebellious_child: '逆子',
+  beloved_child: '爱子',
+  love_hate: '相爱相杀',
+  confidant: '知己',
+  companion: '陪伴伙伴',
+  guardian: '守护者',
+}
 const signs = [
   { value: 'aries', label: '白羊座' }, { value: 'taurus', label: '金牛座' },
   { value: 'gemini', label: '双子座' }, { value: 'cancer', label: '巨蟹座' },
@@ -112,9 +128,11 @@ async function loadPersona() {
     persona.goals = (result.dossier?.goals || []).join('\n')
     persona.evolutionRules = (result.dossier?.evolution_rules || []).join('\n')
     persona.relationship = result.dossier?.relationship || ''
+    bond.value = result.bond
     personaExists.value = true
   } catch (error: unknown) {
     personaExists.value = false
+    bond.value = null
     const status = (error as { response?: { status?: number } })?.response?.status
     if (status !== 404) tabError.persona = detailError(error, '人设加载失败')
   } finally {
@@ -255,6 +273,22 @@ async function loadAnalyses(offset = analysisOffset.value) {
   }
 }
 
+async function loadFortune(date = fortuneDate.value) {
+  tabLoading.fortune = true
+  tabError.fortune = ''
+  fortuneNotConfigured.value = false
+  try {
+    fortune.value = (await getAdminDailyFortune(props.id, date || undefined)).data
+  } catch (error: unknown) {
+    fortune.value = undefined
+    const status = (error as { response?: { status?: number } })?.response?.status
+    if (status === 404) fortuneNotConfigured.value = true
+    else tabError.fortune = detailError(error, '运势核对加载失败')
+  } finally {
+    tabLoading.fortune = false
+  }
+}
+
 function loadTab(name: string | number) {
   if (typeof name === 'string' && route.query.tab !== name) router.replace({ query: { ...route.query, tab: name } })
   if (name === 'persona') loadPersona()
@@ -262,6 +296,7 @@ function loadTab(name: string | number) {
   if (name === 'memories') loadMemories()
   if (name === 'peripheral') loadPeripheral()
   if (name === 'analyses') loadAnalyses()
+  if (name === 'fortune') loadFortune()
 }
 
 async function confirmRotate() {
@@ -379,6 +414,11 @@ onMounted(async () => {
                 </el-select>
               </el-form-item>
               <el-form-item label="知识库版本">{{ persona.follow_latest ? '跟随已发布最新版' : (persona.kb_version ?? '未钉扎') }}</el-form-item>
+              <el-form-item v-if="bond" label="与主人关系">
+                <span>{{ relationshipKindLabels[bond.kind] || bond.label }}</span>
+                <span v-if="bond.summary"> — {{ bond.summary }}</span>
+                <el-tag size="small" class="bond-source">{{ bond.source === 'worker' ? 'worker 推断' : '人工设置' }}</el-tag>
+              </el-form-item>
               <el-form-item label="角色身份">
                 <el-input v-model="persona.identity" :disabled="!canEditPersona" placeholder="例如：温柔的陪伴型 AI 宠物" />
               </el-form-item>
@@ -511,6 +551,8 @@ onMounted(async () => {
               <el-select v-model="analysisKind" placeholder="全部类型" clearable @change="loadAnalyses(0)">
                 <el-option label="每日摘要" value="daily_summary" />
                 <el-option label="人设成长建议" value="persona_growth" />
+                <el-option label="记忆画像" value="memory_profile" />
+                <el-option label="关系推断" value="relationship_update" />
               </el-select>
               <el-button type="primary" :loading="tabLoading.analyses" @click="loadAnalyses(0)">筛选</el-button>
             </div>
@@ -532,6 +574,57 @@ onMounted(async () => {
               @change="loadAnalyses"
             />
           </el-tab-pane>
+
+          <el-tab-pane label="运势核对" name="fortune">
+            <el-alert
+              title="只读核对面板：与用户端同结构同语义，不触发内容懒生成。星座/生辰取账号主人档案，不回退宠物人设星座。"
+              type="info"
+              :closable="false"
+              show-icon
+              class="tab-notice"
+            />
+            <div class="history-tools">
+              <el-date-picker v-model="fortuneDate" type="date" value-format="YYYY-MM-DD" placeholder="默认今天" />
+              <el-button type="primary" :loading="tabLoading.fortune" @click="loadFortune()">查询</el-button>
+            </div>
+            <div v-loading="tabLoading.fortune">
+              <PageEmpty
+                v-if="fortuneNotConfigured"
+                description="设备尚未配置宠物人设（无星座），无法核对运势"
+              />
+              <PageEmpty
+                v-else-if="!fortune && !tabLoading.fortune"
+                :description="tabError.fortune || '暂无数据'"
+                retry-label="重新加载"
+                @retry="loadFortune()"
+              />
+              <template v-else-if="fortune">
+                <el-descriptions :column="1" border class="tab-notice">
+                  <el-descriptions-item label="日期">{{ fortune.date }}</el-descriptions-item>
+                  <el-descriptions-item label="主人星座">{{ fortune.sign ? (signs.find((s) => s.value === fortune!.sign)?.label ?? fortune.sign) : '未录入' }}</el-descriptions-item>
+                  <el-descriptions-item label="问候语">{{ fortune.greeting || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="生成状态">
+                    <el-tag :type="fortune.generating ? 'warning' : 'success'">{{ fortune.generating ? '生成中' : '已完成' }}</el-tag>
+                  </el-descriptions-item>
+                </el-descriptions>
+                <el-descriptions v-if="fortune.sign_fortune" title="星座运势" :column="1" border class="tab-notice">
+                  <el-descriptions-item label="总述">{{ fortune.sign_fortune.overall || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="事业">{{ fortune.sign_fortune.career || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="财运">{{ fortune.sign_fortune.wealth || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="学业">{{ fortune.sign_fortune.study || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="情感">{{ fortune.sign_fortune.love || '暂无' }}</el-descriptions-item>
+                </el-descriptions>
+                <el-descriptions v-if="fortune.bazi_fortune" title="八字运势" :column="1" border>
+                  <el-descriptions-item label="总述">{{ fortune.bazi_fortune.overall || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="事业">{{ fortune.bazi_fortune.career || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="财运">{{ fortune.bazi_fortune.wealth || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="学业">{{ fortune.bazi_fortune.study || '暂无' }}</el-descriptions-item>
+                  <el-descriptions-item label="情感">{{ fortune.bazi_fortune.love || '暂无' }}</el-descriptions-item>
+                </el-descriptions>
+              </template>
+            </div>
+          </el-tab-pane>
+
         </el-tabs>
       </el-card>
     </template>
@@ -547,6 +640,7 @@ onMounted(async () => {
 .capability { margin: 2px 6px 2px 0; }
 .actions { margin-top: 20px; }
 .tab-notice { margin-bottom: 16px; }
+.bond-source { margin-left: 8px; }
 .persona-form { max-width: 640px; }
 .history-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 @media (max-width: 680px) {

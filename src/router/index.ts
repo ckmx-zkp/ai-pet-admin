@@ -6,6 +6,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import DeviceListView from '../views/devices/DeviceListView.vue'
 import DeviceDetailView from '../views/devices/DeviceDetailView.vue'
 import KnowledgeBaseView from '../views/kb/KnowledgeBaseView.vue'
+import OpsView from '../views/ops/OpsView.vue'
 import { getSelectedDeviceId } from '../utils/selectedDevice'
 
 export const router = createRouter({
@@ -19,6 +20,7 @@ export const router = createRouter({
         { path: 'devices', component: DeviceListView },
         { path: 'devices/:id', component: DeviceDetailView, props: true },
         { path: 'kb', component: KnowledgeBaseView },
+        { path: 'ops', component: OpsView },
         {
           path: 'persona',
           redirect: () => selectedDeviceRedirect('persona'),
@@ -38,6 +40,10 @@ export const router = createRouter({
         {
           path: 'peripheral',
           redirect: () => selectedDeviceRedirect('peripheral'),
+        },
+        {
+          path: 'fortune',
+          redirect: () => selectedDeviceRedirect('fortune'),
         },
       ],
     },

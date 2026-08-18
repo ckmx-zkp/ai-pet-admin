@@ -1,6 +1,6 @@
 export const SELECTED_DEVICE_KEY = 'ai-pet-admin-selected-device'
 
-export const DEVICE_TABS = ['persona', 'messages', 'memories', 'analyses', 'peripheral'] as const
+export const DEVICE_TABS = ['persona', 'messages', 'memories', 'analyses', 'peripheral', 'fortune'] as const
 export type DeviceTab = (typeof DEVICE_TABS)[number]
 
 export function getSelectedDeviceId(): string {
