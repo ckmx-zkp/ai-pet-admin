@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { register } from '../../api/auth'
 import { useAuthStore } from '../../stores/auth'
+import { requestErrorMessage } from '../../utils/feedback'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -31,7 +32,7 @@ async function submit() {
       await router.replace((route.query.redirect as string) || '/devices')
     }
   } catch (error: any) {
-    ElMessage.error(error.response?.data?.detail || '请求失败，请稍后重试')
+    ElMessage.error(requestErrorMessage(error, '请求失败，请稍后重试'))
   } finally { loading.value = false }
 }
 </script>
