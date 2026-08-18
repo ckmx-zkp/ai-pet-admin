@@ -28,6 +28,15 @@ AI Pet 的 **Web 管理台前端**（开发者/运营向，纯前端无后端逻
 - 构建：`npm run build`（含 `vue-tsc` 类型检查，**提交前必跑**）
 - **无测试框架、无 lint、无 CI**：验证 = 构建通过 + 页面端到端手测（登录→设备页），结果写进看板。
 
+## 改完即交付（用户要求，勿等下一句）
+
+每次改完本仓代码后主动完成，不要等用户再说「提交 / 构建 / 部署 / 推送」：
+
+1. conventional commit（中文说明）
+2. 前端有改动则 `npm run build`，把 `dist/client/` 同步到 ECS `/opt/ai-pet/ai-pet-admin/dist/`（SSH：`ssh -i "$env:USERPROFILE\.ssh\id_ed25519_aipet" root@39.107.143.71`），再 `docker exec ai-pet-admin-web nginx -s reload`
+3. `git push origin main`
+4. 纯文档/规则改动只需提交并推送，不必重部署静态资源
+
 ## 联调入口
 
 - 线上：`http://39.107.143.71:8080`（同源反代，无需 CORS 改动）
