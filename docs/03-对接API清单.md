@@ -12,9 +12,11 @@
 | 人设 | `GET/PUT /admin/devices/{id}/persona` |
 | 历史 | `GET /admin/devices/{id}/messages?from&to&limit&offset` |
 | 记忆审核 | `GET /admin/devices/{id}/memories` `POST .../memories/{mid}/approve\|reject` |
-| 分析 | `GET /admin/devices/{id}/analyses?kind&limit&offset` |
+| 分析 | `GET /admin/devices/{id}/analyses?kind&limit&offset`（kind 含 daily_summary / persona_growth / memory_profile / relationship_update） |
 | 外设 | `GET /admin/devices/{id}/peripheral` |
+| 运势核对（只读） | `GET /admin/devices/{id}/fortune/daily?date=` |
 | KB | `/admin/kb/zodiac` `/admin/kb/mbti` `/admin/kb/feedback` |
+| 运营指标 | `GET /admin/ops/metrics` |
 | 导出 | `POST /devices/{id}/export`（后端 501，前端不接） |
 
 用户侧 `/devices/*` 仅供 `ai-pet-app`。成长建议应用端点 `POST /devices/{id}/analyses/{aid}/apply-persona-growth` 也是用户 API，管理台不调用。
