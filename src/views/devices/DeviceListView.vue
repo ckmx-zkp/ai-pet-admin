@@ -11,7 +11,14 @@ import {
   Cpu,
   CircleCheck,
   Connection,
-  InfoFilled
+  InfoFilled,
+  Grid,
+  Menu,
+  Clock,
+  Key,
+  UserFilled,
+  ChatDotRound,
+  Collection
 } from '@element-plus/icons-vue'
 import { listAdminDevices, lookupAdminDevice, type AdminDevice } from '../../api/adminDevices'
 import OffsetPager from '../../components/OffsetPager.vue'
@@ -28,6 +35,7 @@ const offset = ref(0)
 const pageSize = 20
 const hasMore = ref(false)
 const lookupMode = ref(false)
+const viewMode = ref<'cards' | 'table'>('cards')
 
 // 概览统计指标
 const stats = computed(() => {
@@ -95,6 +103,10 @@ async function copyText(text: string, label = '内容') {
   }
 }
 
+function goToDevice(id: number, tab?: string) {
+  router.push(tab ? `/devices/${id}?tab=${tab}` : `/devices/${id}`)
+}
+
 function notifyNeedDevice() {
   if (route.query.needDevice === '1') {
     ElMessage.warning('请先在列表中点击打开一台设备，再查看对应的人设、历史或分析')
@@ -117,6 +129,19 @@ watch(() => route.query.needDevice, notifyNeedDevice)
         <p class="page-subtitle">
           监控全量 AI 宠物硬件资产状态、查询 Binding ID 与进行底层硬件诊断
         </p>
+      </div>
+      <!-- 视图切换器 -->
+      <div class="view-toggle-group">
+        <el-radio-group v-model="viewMode" size="default">
+          <el-radio-button value="cards">
+            <el-icon><Grid /></el-icon>
+            <span class="btn-text">独立卡片流</span>
+          </el-radio-button>
+          <el-radio-button value="table">
+            <el-icon><Menu /></el-icon>
+            <span class="btn-text">精简表格</span>
+          </el-radio-button>
+        </el-radio-group>
       </div>
     </div>
 
@@ -215,8 +240,151 @@ watch(() => route.query.needDevice, notifyNeedDevice)
       </el-form>
     </el-card>
 
-    <!-- 设备表格卡片 -->
-    <el-card class="table-card" shadow="never">
+    <!-- 视图模式 A：独立设备卡片流 (Card Grid) -->
+    <div v-if="viewMode === 'cards'" v-loading="loading" class="devices-grid-wrapper">
+      <div v-if="devices.length" class="devices-card-grid">
+        <div
+          v-for="device in devices"
+          :key="device.id"
+          class="device-card"
+          :class="{ 'is-online': device.online }"
+        >
+          <!-- 卡片头部：图标、名称与状态指示 -->
+          <div class="dcard-header">
+            <div class="dcard-title-group">
+              <div class="dcard-avatar">
+                <el-icon><Cpu /></el-icon>
+              </div>
+              <div class="dcard-names">
+                <div class="name-row">
+                  <h3 class="device-name-text">{{ device.name || '未命名守护星' }}</h3>
+                  <span class="device-id-badge">#{{ device.id }}</span>
+                </div>
+                <div class="mac-pill" @click="copyText(device.device_uid, '设备 MAC')">
+                  <code>{{ device.device_uid }}</code>
+                  <el-icon class="copy-mac-icon"><CopyDocument /></el-icon>
+                </div>
+              </div>
+            </div>
+
+            <!-- 在线与认领状态徽章 -->
+            <div class="dcard-status-box">
+              <div class="status-indicator">
+                <span class="status-dot" :class="device.online ? 'online' : 'offline'"></span>
+                <span :class="device.online ? 'text-green' : 'text-gray'" class="status-text">
+                  {{ device.online ? '在线' : '离线' }}
+                </span>
+              </div>
+              <el-tag
+                :type="device.claimed ? 'success' : 'warning'"
+                size="small"
+                effect="light"
+                round
+                class="claim-badge"
+              >
+                {{ device.claimed ? '已认领' : '待认领' }}
+              </el-tag>
+            </div>
+          </div>
+
+          <!-- 卡片中段：Binding ID 专属高亮面板 -->
+          <div class="dcard-binding-box">
+            <div class="binding-head">
+              <span class="binding-title">
+                <el-icon><Key /></el-icon>
+                <span>认领凭证 (Binding ID)</span>
+              </span>
+              <el-tooltip content="点击一键复制绑定码" placement="top">
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  :icon="CopyDocument"
+                  @click.stop="copyText(device.binding_id, '绑定码')"
+                >
+                  复制
+                </el-button>
+              </el-tooltip>
+            </div>
+            <div class="binding-code-display">
+              <code>{{ device.binding_id }}</code>
+            </div>
+          </div>
+
+          <!-- 卡片元数据信息：心跳、固件、能力 -->
+          <div class="dcard-meta-list">
+            <div class="meta-row">
+              <span class="meta-k"><el-icon><Clock /></el-icon> 最近心跳</span>
+              <span class="meta-v">{{ formatDateTime(device.last_seen_at) }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-k"><el-icon><Connection /></el-icon> 固件版本</span>
+              <el-tag size="small" type="info">{{ device.firmware_version || '未上报' }}</el-tag>
+            </div>
+            <div class="meta-row capabilities-row">
+              <span class="meta-k">外设能力</span>
+              <div class="cap-pill-group">
+                <template v-if="Object.keys(device.capabilities || {}).length">
+                  <el-tag
+                    v-for="(val, k) in device.capabilities"
+                    :key="k"
+                    size="small"
+                    effect="plain"
+                    class="cap-pill"
+                  >
+                    {{ k }}
+                  </el-tag>
+                </template>
+                <span v-else class="text-muted font-12">暂无上报</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片底部快捷操作 -->
+          <div class="dcard-actions">
+            <div class="quick-tabs">
+              <span class="quick-link" @click="goToDevice(device.id, 'persona')">
+                <el-icon><UserFilled /></el-icon> 人设
+              </span>
+              <span class="quick-link" @click="goToDevice(device.id, 'messages')">
+                <el-icon><ChatDotRound /></el-icon> 历史
+              </span>
+              <span class="quick-link" @click="goToDevice(device.id, 'memories')">
+                <el-icon><Collection /></el-icon> 记忆
+              </span>
+            </div>
+
+            <el-button
+              type="primary"
+              class="primary-action-btn"
+              @click="goToDevice(device.id)"
+            >
+              <span>诊断与详情</span>
+              <el-icon><ArrowRight /></el-icon>
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <PageEmpty
+        v-if="!loading && !devices.length"
+        :description="loadError || '暂无匹配的设备资产数据'"
+        retry-label="刷新资产列表"
+        @retry="lookupMode ? lookupDevice() : loadDevices(offset)"
+      />
+
+      <OffsetPager
+        v-if="!lookupMode && (devices.length || offset > 0)"
+        :offset="offset"
+        :page-size="pageSize"
+        :has-more="hasMore"
+        :loading="loading"
+        @change="loadDevices"
+      />
+    </div>
+
+    <!-- 视图模式 B：表格视图 (Table Grid) -->
+    <el-card v-else class="table-card" shadow="never">
       <el-table
         v-loading="loading"
         :data="devices"
@@ -345,6 +513,11 @@ watch(() => route.query.needDevice, notifyNeedDevice)
   margin: 0;
 }
 
+.view-toggle-group .btn-text {
+  margin-left: 6px;
+  font-size: 13px;
+}
+
 /* 统计微卡片 */
 .stats-row {
   display: grid;
@@ -433,6 +606,10 @@ watch(() => route.query.needDevice, notifyNeedDevice)
   font-weight: 500;
 }
 
+.font-12 {
+  font-size: 12px;
+}
+
 /* 提示卡片 */
 .notice-card {
   background: #f0fdf4;
@@ -478,6 +655,267 @@ watch(() => route.query.needDevice, notifyNeedDevice)
 .search-buttons {
   display: flex;
   gap: 10px;
+}
+
+/* ================= 独立设备卡片流 (Card Grid) ================= */
+.devices-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.devices-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.device-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.device-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  border-color: #cbd5e1;
+}
+
+.device-card.is-online {
+  border-top: 3px solid #10b981;
+}
+
+/* 卡片头部 */
+.dcard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.dcard-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dcard-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.dcard-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.device-name-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.device-id-badge {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.mac-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: fit-content;
+  transition: background 0.2s ease;
+}
+
+.mac-pill:hover {
+  background: #e2e8f0;
+}
+
+.mac-pill code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+  color: #475569;
+}
+
+.copy-mac-icon {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dcard-status-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-text {
+  font-size: 12px;
+}
+
+.claim-badge {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Binding ID 专属展示框 */
+.dcard-binding-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.binding-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.binding-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.binding-code-display code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4f46e5;
+  letter-spacing: 0.5px;
+}
+
+/* 元数据列表 */
+.dcard-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.meta-k {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+}
+
+.meta-v {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.capabilities-row {
+  align-items: flex-start;
+}
+
+.cap-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  max-width: 65%;
+}
+
+.cap-pill {
+  font-size: 10px;
+  height: 20px;
+  line-height: 20px;
+}
+
+/* 卡片操作区 */
+.dcard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+  margin-top: auto;
+}
+
+.quick-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-link:hover {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.primary-action-btn {
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 8px 16px;
 }
 
 /* 表格定制 */
@@ -566,12 +1004,6 @@ watch(() => route.query.needDevice, notifyNeedDevice)
   color: #94a3b8;
 }
 
-.status-indicator {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-}
-
 .claim-tag {
   font-weight: 500;
   font-size: 12px;
@@ -596,6 +1028,14 @@ watch(() => route.query.needDevice, notifyNeedDevice)
   }
   .search-buttons {
     flex-wrap: wrap;
+  }
+  .devices-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }
 </style>
